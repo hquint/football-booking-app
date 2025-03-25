@@ -1,0 +1,7 @@
+# General
+.DS_Store
+node_modules/
+.env
+.env.local
+.vscode/
+__pycache__/
