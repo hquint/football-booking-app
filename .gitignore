@@ -1,0 +1,14 @@
+# General
+.DS_Store
+/backend/.env
+.env.local
+.vscode/
+# Python cache files
+__pycache__/
+*.pyc
+# Ignore virtual environment
+venv/
+# Node modules for frontend
+/frontend/node_modules/
+/frontend/build/
+
