@@ -1,9 +1,13 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from datetime import datetime, timedelta
-
+from fastapi import HTTPException
 
 def create_player(db: Session, player: schemas.PlayerCreate):
+    existing_player = db.query(models.Player).filter(models.Player.name == player.name).first()
+    if existing_player:
+        raise HTTPException(status_code=400, detail="Player name already exists. Please add a surname to make it unique.")     
+        
     new_player = models.Player(name=player.name, position=player.position)
     db.add(new_player)
     db.commit()
