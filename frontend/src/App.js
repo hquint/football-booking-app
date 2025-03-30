@@ -93,9 +93,15 @@ function App() {
               <td>{player.name}</td>
               {thursdays.map((date) => (
                 <td key={`${player.id}-${date}`}>
-                  <button onClick={() => handleAttendance(player.id, date, "yes")} style={{ color: "green" }}>✅</button>
-                  <button onClick={() => handleAttendance(player.id, date, "no")} style={{ color: "red" }}>❌</button>
-                  <button onClick={() => handleAttendance(player.id, date, "maybe")} style={{ color: "orange" }}>⚠️</button>
+                  <select
+                    value={attendance[`${player.id}-${date}`] || ""}
+                    onChange={(e) => handleAttendance(player.id, date, e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    <option value="yes">✅</option>
+                    <option value="no">❌</option>
+                    <option value="maybe">⚠️</option>
+                  </select>
                 </td>
               ))}
             </tr>
@@ -106,7 +112,7 @@ function App() {
             <td>Total Attending</td>
             {thursdays.map((date) => (
               <td key={`total-${date}`}>
-                {Object.values(attendance).filter((status) => status === "yes").length}
+                {players.filter(player => attendance[`${player.id}-${date}`] === "yes").length}
               </td>
             ))}
           </tr>
