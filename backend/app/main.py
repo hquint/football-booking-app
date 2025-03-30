@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import Base, engine, SessionLocal
 from . import models, schemas, crud
+from .models import Attendance
+from typing import List
+
+app = FastAPI()
 
 # Create tables (if not exist)
 Base.metadata.create_all(bind=engine)
-
-app = FastAPI()
 
 # Allow CORS for the frontend React app
 app.add_middleware(
@@ -29,6 +31,11 @@ def get_db():
 @app.get("/")
 def read_root():
     return {"message": "Local PostgreSQL connected!"}
+
+
+# ---------------------------------
+# CRUD Operations for Players
+# ---------------------------------
 
 # 🟢 CREATE a new player
 @app.post("/players/", response_model=schemas.PlayerResponse)
@@ -63,3 +70,22 @@ def delete_player(player_id: int, db: Session = Depends(get_db)):
     if not deleted_player:
         raise HTTPException(status_code=404, detail="Player not found")
     return {"message": "Player deleted successfully"}
+
+# ---------------------------------
+# Features: Get Thursdays & Attendance
+# ---------------------------------
+
+# Get upcoming Thursdays
+@app.get("/thursdays/", response_model=List[str])
+def get_thursdays():
+    return crud.get_thursdays()
+ 
+# Get all attendance records
+@app.get("/attendance/", response_model=List[schemas.AttendanceResponse])
+def get_all_attendance(db: Session = Depends(get_db)):
+    return crud.get_all_attendance(db)
+
+# Update player attendance
+@app.post("/attendance/")
+def update_player_attendance(player_id: int, date: str, status: str, db: Session = Depends(get_db)):
+    return crud.update_player_attendance(db, player_id, date, status)

@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from datetime import datetime, timedelta
+
 
 def create_player(db: Session, player: schemas.PlayerCreate):
     new_player = models.Player(name=player.name, position=player.position)
@@ -30,3 +32,57 @@ def delete_player(db: Session, player_id: int):
         db.commit()
         return player
     return None
+
+def get_thursdays():
+    """
+    Function to get the next 10 Thursdays from today.
+    Returns a list of dates in YYYY-MM-DD format.
+    """
+    today = datetime.today()
+    thursdays = []
+    
+    # Find the first upcoming Thursday
+    days_until_thursday = (3 - today.weekday()) % 7
+    if days_until_thursday == 0:
+        days_until_thursday = 7  # If today is Thursday, move to the next one
+
+    next_thursday = today + timedelta(days=days_until_thursday)
+
+    # Collect the next 10 Thursdays
+    for _ in range(10):
+        thursdays.append(next_thursday.strftime("%Y-%m-%d"))
+        next_thursday += timedelta(days=7)  # Move to the next Thursday
+        
+    return thursdays
+
+# Get all attendance records
+def get_all_attendance(db: Session):
+    """
+    Function to get all attendance records.
+    Returns a list of attendance records.
+    """
+    # Assuming you have a model named Attendance
+    # and a relationship set up with Player
+    return db.query(models.Attendance).all()
+
+# Update player attendance
+def update_player_attendance(db: Session, player_id: int, date: str, status: str):
+    """
+    Function to update player attendance.
+    If a record for the player and date exists, it updates the status.
+    If not, it creates a new record.
+    """
+    attendance_record = (
+        db.query(models.Attendance)
+        .filter(models.Attendance.player_id == player_id, models.Attendance.date == date)
+        .first()
+    )
+
+    if attendance_record:
+        attendance_record.status = status  # Update existing record
+    else:
+        new_record = models.Attendance(player_id=player_id, date=date, status=status)
+        db.add(new_record)  # Create a new record
+
+    db.commit()
+    return {"message": "Attendance updated"}
