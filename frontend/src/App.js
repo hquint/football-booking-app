@@ -129,10 +129,12 @@ import React, { useEffect, useState } from "react";
 
 function App() {
   const [players, setPlayers] = useState([]);
+  const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [thursdays, setThursdays] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [newPlayerName, setNewPlayerName] = useState("");
 
+  // Fetch data from the API
   useEffect(() => {
     fetch("http://127.0.0.1:8000/players/")
       .then((res) => res.json())
@@ -153,6 +155,7 @@ function App() {
       });
   }, []);
 
+  // Function to handle attendance updates
   const handleAttendance = (player_id, date, status) => {
     fetch("http://127.0.0.1:8000/attendance/", {
       method: "POST",
@@ -166,6 +169,7 @@ function App() {
     });
   };
 
+  // Function to handle adding a new player
   const addPlayer = () => {
     if (!newPlayerName.trim()) return;
 
@@ -188,10 +192,40 @@ function App() {
       .catch((error) => alert(error.message));
   };
 
+  // Function to start editing player
+  const handleEditPlayer = (playerId, playerName) => {
+    setEditingPlayerId(playerId);
+    setNewPlayerName(playerName); // pre-fill input with current name
+  };
+
+  // Function to save the updated player name
+  const handleSavePlayerName = (playerId) => {
+    fetch(`http://127.0.0.1:8000/players/${playerId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: newPlayerName,
+        position: "Not provided", // You can include other fields if needed
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setPlayers((prev) =>
+          prev.map((player) =>
+            player.id === playerId ? { ...player, name: newPlayerName } : player
+          )
+        );
+        setEditingPlayerId(null); // Stop editing
+      });
+  };
+ 
+  
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
       <h1 className="text-3xl font-bold text-gray-800 mb-4">Football Attendance</h1>
-
+  
       {/* Add Player Input */}
       <div className="flex gap-2 mb-6">
         <input
@@ -208,7 +242,7 @@ function App() {
           Add Player
         </button>
       </div>
-
+  
       {/* Table */}
       <div className="overflow-auto w-full max-w-4xl">
         <table className="w-full border-collapse shadow-lg bg-white rounded-lg">
@@ -223,7 +257,35 @@ function App() {
           <tbody>
             {players.map((player) => (
               <tr key={player.id} className="hover:bg-gray-100">
-                <td className="p-3 border">{player.name}</td>
+                <td className="p-3 border flex items-center">
+                  {editingPlayerId === player.id ? (
+                    <input
+                      type="text"
+                      value={newPlayerName}
+                      onChange={(e) => setNewPlayerName(e.target.value)}
+                      className="p-2 border rounded-lg"
+                    />
+                  ) : (
+                    <>
+                      <span className="mr-2">{player.name}</span>
+                      <button
+                        onClick={() => handleEditPlayer(player.id, player.name)}
+                        className="text-blue-500"
+                      >
+                        ✏️
+                      </button>
+                    </>
+                  )}
+  
+                  {editingPlayerId === player.id && (
+                    <button
+                      onClick={() => handleSavePlayerName(player.id)}
+                      className="ml-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                    >
+                      Save
+                    </button>
+                  )}
+                </td>
                 {thursdays.map((date) => (
                   <td key={`${player.id}-${date}`} className="p-3 border text-center">
                     <select
@@ -241,7 +303,7 @@ function App() {
               </tr>
             ))}
           </tbody>
-
+  
           {/* Total Attending */}
           <tfoot>
             <tr className="bg-gray-100 font-semibold">
