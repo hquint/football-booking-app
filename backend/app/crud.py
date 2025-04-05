@@ -1,9 +1,13 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from datetime import datetime, timedelta
-
+from datetime import date, datetime, timedelta
+from fastapi import HTTPException
 
 def create_player(db: Session, player: schemas.PlayerCreate):
+    existing_player = db.query(models.Player).filter(models.Player.name == player.name).first()
+    if existing_player:
+        raise HTTPException(status_code=400, detail="Player name already exists. Please add a surname to make it unique.")     
+        
     new_player = models.Player(name=player.name, position=player.position)
     db.add(new_player)
     db.commit()
@@ -66,12 +70,13 @@ def get_all_attendance(db: Session):
     return db.query(models.Attendance).all()
 
 # Update player attendance
-def update_player_attendance(db: Session, player_id: int, date: str, status: str):
+def update_player_attendance(db: Session, player_id: int, date: date, status: str):
     """
     Function to update player attendance.
     If a record for the player and date exists, it updates the status.
     If not, it creates a new record.
     """
+   
     attendance_record = (
         db.query(models.Attendance)
         .filter(models.Attendance.player_id == player_id, models.Attendance.date == date)

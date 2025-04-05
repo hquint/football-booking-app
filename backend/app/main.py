@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -87,5 +88,5 @@ def get_all_attendance(db: Session = Depends(get_db)):
 
 # Update player attendance
 @app.post("/attendance/")
-def update_player_attendance(player_id: int, date: str, status: str, db: Session = Depends(get_db)):
-    return crud.update_player_attendance(db, player_id, date, status)
+def update_player_attendance(data: schemas.AttendanceUpdate, db: Session = Depends(get_db)):
+    return crud.update_player_attendance(db, data.player_id, data.date, data.status)
